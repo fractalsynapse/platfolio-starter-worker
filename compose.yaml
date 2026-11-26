@@ -24,7 +24,7 @@ services:
 x-platfolio:
   metadata:
     name: starter-worker
-    version: 0.1.1
+    version: 0.1.2
     title: Starter Worker Service
     summary: Scaled background workers that keep their state on a retained volume.
     kind: worker
