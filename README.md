@@ -11,24 +11,14 @@ docker compose logs -f queue        # watch jobs recover their history after a r
 
 ## The part that costs money
 
-`job-state` is declared with `retention: survive`. That means:
+`job-state` keeps the worker’s job history between deployments. Removing the worker with
+**Keep data** stops it and retains the volume. Restoring it reconnects the same disk and
+reads `jobs.jsonl`. Retained storage may still incur charges.
 
-- platfolio may destroy the service — for scale, for cost, for an idle night — and **the disk stays**,
-  attached to nothing;
-- the next service mounts the same volume and reads `jobs.jsonl`, which is why the worker logs
-  `state recovered: …` rather than trusting memory;
-- deleting the instance does **not** delete the volume. Deletion is opt-in, because the default for
-  something that holds state should not be destruction.
-
-Two consequences you own, not platfolio:
-
-1. An unattached volume bills and shows no symptom. platfolio reports volumes that belong to nothing for
-   exactly this reason — the money-saving feature quietly spends money if nobody looks.
-2. Only platfolio's workspace-tier operations can delete storage. The per-dispatch token can *create* a
-   volume and cannot delete one, which is measured, not assumed.
+**Wipe data** deletes the separate Railway project and schedules deletion of its storage.
 
 ## First changes worth making
 
 1. Replace `tick()` with your queue client (SQS, Postgres `LISTEN`, Redis) and delete the disk journal.
-2. Keep `/healthz` — it is the only inbound port, and it exists for the platform, not for users.
+2. Keep `/healthz` for the platform’s startup check. The worker has no public address.
 3. Set `WORKER_CONCURRENCY` from the environment rather than the default of 4.
